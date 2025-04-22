@@ -1,0 +1,677 @@
+---
+title: "7조 행복을 찾아서!"
+code-overflow: scroll  # 코드 길어질 경우 스크롤 허용
+title-slide-attributes: 
+  data-background-image: 1.jpg
+  data-background-size: cover
+  data-background-opacity: "0.5"  # 배경 투명도 조절
+  data-font-size: 48px  # 🔥 기본 글자 크기 조절 (제목, 부제목, 저자 포함)
+  
+author: "Team 7: 권서연, 김규진, 김예원, 양현준, 이재우"
+subtitle: "행복에 영향을 미치는 지표"
+format:
+  revealjs:
+    theme: simple  # 또는 white, night
+    slide-number: true
+    chalkboard: false
+    code-overflow: scroll
+    font-family: "Inter, Helvetica, sans-serif"
+execute:
+  echo: true  # 기본적으로 코드와 결과 모두 표시
+  warning: false  # (선택) 경고 메시지 숨기기
+css: styles.css  # 🔥 CSS 파일 적용
+---
+
+```{python}
+#| echo : false 
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+```
+
+# 🗒️ 목차
+
+::: text-center
+<br> <span class="section-title">1. 주제 선정 이유
+
+<span class="section-title">2. 데이터 준비 및 전처리
+
+<span class="section-title">3. 데이터 분석 및 시각화
+
+<span class="section-title">4. 결론 및 개선 방안
+:::
+
+# 1. 주제 선정 이유
+
+## 1-1 세계 행복 보고서 <br> (World Happiness Report)
+::: {.columns}
+
+::: {.column width="70%"}
+
+| 영어                           | 한글                         |
+|-------------------------------|------------------------------|
+| GDP per Capita                | 1인당 국내총생산 (GDP)       |
+| Social Support (Family)       | 사회적 지원 (가족 등)        |
+| Healthy Life Expectancy       | 건강 기대 수명               |
+| Freedom to Make Life Choices  | 삶의 선택 자유               |
+| Generosity                    | 관대함(기부여부)             |
+| Perceptions of Corruption     | 부패 인식 (정부 신뢰도)      |
+
+:::
+
+::: {.column width="30%"}
+<br>
+
+### 우리나라 순위  
+- 158개국 중  
+
+::: {.incremental}
+- 47위!
+:::
+
+자료 출처: [world-happiness](https://www.kaggle.com/datasets/unsdsn/world-happiness)
+
+:::
+
+:::
+
+
+# 2. 데이터 준비 및 전처리
+
+## 2-1 데이터 정보
+
+#### 서울 서베이(2024, 구 도시정책지표조사)
+
+![](./image1.png) ![](./image2.png)
+
+-   사회 지표 (인구와 가구, 경제와 노동, 도시생활과 주거, 건강과 보건 등)
+-   BSC지표 (보육, 문화환경, 교통, 보행 만족도 등)
+-   표본 크기 : 20,000가구(만 15세 이상 가구원 36,280명)
+
+
+------------------------------------------------------------------------
+
+## 2-2 데이터 추출
+::: {.columns}
+::: {.column width="60%"}
+<!-- ::: {.column width="60%" style="margin-top:20px;"} -->
+```{python}
+#| code-fold: true
+#| code-summary: "클릭해서 코드 보기"
+import numpy as np
+import pandas as pd
+dat = pd.read_csv("./happiness_raw.csv",encoding='euc-kr')
+
+dat.info()
+```
+:::
+
+::: {.column width="40%"}
+<br>
+
+### 주요 데이터
+- 총 279개 문항 중 행복에 영향을 
+<br>줄 것 같은 변수 23개 추출!
+:::
+:::
+
+---
+
+## 2-3 행복지수 / 행복여부 칼럼 생성
+- 행복 관련 5개 문항 평균내어 **행복지수** 칼럼 생성
+```{python}
+#| echo : true
+import numpy as np
+import pandas as pd
+from scipy.stats import t
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+dat1 = pd.read_csv('./happiness_raw.csv', encoding='euc-kr')
+dat1['행복지수'] = dat1[['행복지수_자신의 건강상태','행복지수_자신의 재정상태','행복지수_주위 친지, 친구와의 관계',
+                   '행복지수_주위 친지, 친구와의 관계','행복지수_가정생활','행복지수_사회생활']].mean(axis=1)
+sum(dat1['행복지수'].isna())
+
+```
+
+---
+
+### 행복지수 분포 확인하기
+```{python}
+plt.figure(figsize = (10, 3))
+plt.hist(x=dat1['행복지수'], bins=50, edgecolor='black')
+plt.show()
+```
+
+::: {.callout-note appearance="simple"}
+-   중앙에 뾰족한 봉우리가 존재, 전반적으로 왼쪽으로 꼬리가 긴 비대칭 분포
+- 특히 6점 부근에 값이 집중적으로 몰림
+- 왜? 🤔 **중립값 선호 현상** → 평균값, 중립값을 선택하고자 하는 경향 때문일 가능성이 높음
+![](./central_tendency_bias.png)
+:::
+
+<br>
+<br>
+<br>
+---
+
+### 행복지수 구간화하여 `행복여부` 칼럼 생성하기
+```{python}
+#| echo : true
+#| fig-align: center
+#| results: hide
+
+def change(x):
+    if x<4.2:
+        return '불행'
+    elif x>8:
+        return '행복'
+    else:
+        return np.nan
+dat1['행복여부'] = dat1['행복지수'].apply(change)
+
+```
+- `행복지수`를 기반으로 구간화하여 `행복여부` 칼럼 생성
+- 6점 부근은 무난한 선택일 가능성이 있어 해석이 애매함.
+- 그리고, 우리의 분석 목적은 **“무엇이 사람을 행복하게 만드는가?”**에 있으므로
+- 중립값 제외, **행복** vs. **불행** 구간으로 단순화
+
+
+::: {.callout-note appearance="simple"}
+-   왜 4.2와 8을 선택했는가? 🤔
+
+:::
+
+---
+
+## 2-4 데이터 범주화
+
+
+::: {.column width="60%"}
+![](./value_change.png)
+:::
+
+::: {.column width="40%"}
+- 분석 용이성을 위해 설문 문항의 
+<br>
+  보기를 3~4개 그룹으로 재범주화
+
+#### 예시
+- 1~5점 척도: 낮음(1-2), 보통(3), 높음(4-5)
+<br>
+- 소득 수준: 하, 중, 상, 최상
+:::
+
+
+
+---
+
+## 2-5 데이터 결측치 제거
+
+::: {.columns}
+
+::: {.column width="60%"}
+
+#### 행복지수 결측치 확인
+```{python}
+
+sum(dat1['행복지수'].isna())
+
+```
+
+
+#### 변수별 결측치 확인
+```{python}
+
+dat1.isna().sum().sort_values(ascending=False)
+
+```
+
+:::
+
+::: {.column width="40%"}
+
+::: {.callout-note appearance="simple"}
+- `행복지수`에는 결측치가 존재하지 않음
+- 그러나 변수에 따라 결측치가 존재함
+- 예: `직업 만족도`, `월 평균 근로소득`의 경우,
+<br> 비해당 응답자(무직 등)로 인해 결측치가 발생함
+:::
+
+- 각 변수와 행복지수 간의 관계를 확인하는 분석이므로,
+- 전체 데이터를 일괄적으로 dropna() 하기보다는,
+- 변수별로 결측 여부를 확인한 후, 필요한 경우에만 선택적으로 dropna()를 적용함
+
+:::
+
+:::::
+
+```{python}
+#| echo: false
+import numpy as np
+import pandas as pd
+from scipy.stats import t
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.stats import chi2_contingency
+from statsmodels.stats.proportion import proportion_confint
+from statsmodels.graphics.mosaicplot import mosaic
+from statsmodels.stats.multicomp import pairwise_tukeyhsd
+plt.rcParams['font.family'] = 'Malgun Gothic'
+
+
+# --------------------------------------------------------------
+# 공통사용함수
+def group_5to3(x):
+    if x in [1, 2]:
+        return '낮음(1-2)'
+    elif x == 3:
+        return '보통(3)'
+    elif x in [4, 5]:
+        return '높음(4-5)'
+    else:
+        return np.nan
+
+def labelizer(key):
+    return f"{key[0]}\n{key[1]}"
+
+def chi_print(table):
+    chi2, p, dof, expected = chi2_contingency(table, correction=False)
+    print(f"카이제곱 통계량: {chi2:.3f}, p-value: {p:.3f}")
+    return
+
+def visual_code(data):
+    data['Proportion'] = data['행복'] / data['전체']
+
+    # 신뢰구간 계산 (normal method 사용)
+    confints = [proportion_confint(count, total, alpha=0.05, method='normal') 
+                for count, total in zip(data['행복'], data['전체'])]
+
+    # 아래는 반복
+    data['CI_lower'] = [ci[0] for ci in confints]
+    data['CI_upper'] = [ci[1] for ci in confints]
+
+    # 에러바 계산 (위쪽 아래쪽 길이)
+    data['yerr_lower'] = data['Proportion'] - data['CI_lower']
+    data['yerr_upper'] = data['CI_upper'] - data['Proportion']
+
+    # 바 플롯 + 에러바 그리기
+    plt.figure(figsize=(8, 6))
+    plt.bar(data['Group'], data['Proportion'], yerr=[data['yerr_lower'], data['yerr_upper']], 
+            capsize=5, color='skyblue', edgecolor='black')
+
+    plt.ylim(0, 1)
+    plt.ylabel('Estimated Proportion (with 95% CI)')
+    plt.title('모비율 추정 및 95% 신뢰구간')
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.show()
+
+```
+
+# 3. 데이터 분석 및 시각화
+
+
+## 3-1 표본평균으로 모평균 신뢰구간 추정 
+
+```{python}
+#| code-fold: true
+#| code-summary: "클릭해서 코드 보기"
+# 행복지수 모평균 추정
+n = len(dat1['행복지수'])
+mean = np.mean(dat1['행복지수'])
+std = np.std(dat1['행복지수'], ddof=1)
+
+# 신뢰수준 설정 (95%)
+confidence = 0.95
+alpha = 1 - confidence
+a = n - 1  # 자유도
+# t-임계값
+t_critical = t.ppf(1 - alpha/2, a)
+
+# 신뢰구간 계산
+margin_of_error = t_critical * (std / np.sqrt(n))
+ci_lower = mean - margin_of_error
+ci_upper = mean + margin_of_error
+```
+
+```{python}
+#| echo : false
+print(f"신뢰구간: {ci_lower.round(2)} - {ci_upper.round(2)}")
+```
+::: {.callout-note appearance="caution"}  
+- 95% 신뢰구간을 이용한 모평균의 신뢰구간을 알 수 있음.
+- 데이터 개수 또한 36280개로 충분히 많기 때문에 표본 평균을 모평균이라고 추정할 수 있음.
+:::
+```{python}
+#| fig-width: 6
+#| fig-height: 2
+#| code-fold: true
+#| code-summary: "클릭해서 코드 보기"
+x = np.linspace(mean - 0.03 , mean + 0.03, 500)
+y = t.pdf((x - mean) / (std / np.sqrt(n)), a)  # t 분포 PDF
+
+plt.figure(figsize=(10, 3))
+plt.plot(x, y, label='t-분포', color='gray')
+
+# 평균 (빨간선)
+plt.axvline(mean, color='red', linestyle='--', label=f'표본 평균 ({mean:.2f})')
+
+# 신뢰구간 (파란선)
+plt.axvline(ci_lower, color='blue', linestyle=':', label=f'신뢰구간 하한 ({ci_lower:.2f})')
+plt.axvline(ci_upper, color='blue', linestyle=':', label=f'신뢰구간 상한 ({ci_upper:.2f})')
+
+plt.title('행복지수 모평균 신뢰구간')
+plt.xlabel('행복지수')
+plt.ylabel('확률 밀도')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+```
+
+
+:::  
+
+## 3-2 변수 별 분석①_행복지수와 가족과의 식사
+### 모자이크 시각화, 카이제곱 검정
+::::: columns
+
+::: {.column width="60%"}
+```{python}
+#| code-fold: true
+#| #| code-summary: "클릭해서 코드 보기"
+dat23 = dat1[['가족과 함께 보내는 시간_가족과의 식사', '행복여부']].dropna()
+dat23['G_가족과 함께 보내는 시간_가족과의 식사'] = dat23['가족과 함께 보내는 시간_가족과의 식사'].apply(group_5to3)
+
+order = ['낮음(1-2)', '보통(3)', '높음(4-5)']
+dat23['G_가족과 함께 보내는 시간_가족과의 식사'] = pd.Categorical(dat23['G_가족과 함께 보내는 시간_가족과의 식사'], categories=order, ordered=True)
+table = pd.crosstab(dat23['G_가족과 함께 보내는 시간_가족과의 식사'], dat23['행복여부'])
+
+visual_table1 = table
+
+# 모자이크 시각화 코드
+table_dict = table.stack().to_dict()
+plt.figure(figsize=(8, 6))
+mosaic(table_dict, labelizer=labelizer, title='G_가족과 함께 보내는 시간_가족과의 식사 ↔ 행복지수')
+plt.show()
+```
+
+
+
+:::
+
+::: {.column width="40%"}
+
+- 카이제곱 통계량: 313.732
+- p-value: 0.000
+- 독립성 검정: 상관이 있다고 말할 통계적 근거가 충분하다.
+- 동질성 검정: 하나라도 비율이 다른 범주가 있다고 말할 통계적 근거가 충분하다.
+
+
+:::
+
+::::
+
+---
+
+## 3-2 Tukey 사후검정
+### 행복지수와 가족과의 식사
+
+```{python}
+#| code-fold: true
+#| code-summary: "클릭해서 코드 보기"
+import matplotlib.pyplot as plt
+dat23 = dat1[['가족과 함께 보내는 시간_가족과의 식사','행복지수']]
+dat23['가족과 함께 보내는 시간_가족과의 식사'] = dat23['가족과 함께 보내는 시간_가족과의 식사'].apply(group_5to3)
+dat23 = dat23.dropna()
+    
+tukey = pairwise_tukeyhsd(
+    endog=dat23['행복지수'],      
+    groups=dat23['가족과 함께 보내는 시간_가족과의 식사'],  
+    alpha=0.05            
+)
+
+from statsmodels.stats.multicomp import pairwise_tukeyhsd
+from IPython.display import Markdown, display
+
+# Tukey 요약 결과를 markdown으로 크게 출력
+display(Markdown(f"<pre style='font-size: 1em'>{tukey.summary()}</pre>"))
+
+```
+
+- tukey사후검정: 모든 변수 조합이 차이가 있다고 말할 통계적 근거가 충분하다.
+- 가족과 보내는 시간이 많을수록 행복하다!
+
+
+---
+
+
+## 3-2 변수 별 분석②_행복지수와 월평균 근로소득
+### 모자이크 시각화, 카이제곱 검정
+
+::::: columns
+
+::: {.column width="60%"}
+```{python}
+#| code-fold: true
+#| code-summary: "클릭해서 코드 보기"
+# 부자
+
+dat3 = dat1[['월 평균 근로소득','행복여부']]
+dat3 = dat3.dropna()
+def change2(x):
+    if x<4:
+        return '하'
+    elif x<9:
+        return '중'
+    elif x<14:
+        return '상'
+    else:
+        return '최상'
+dat3['월 평균 근로소득'] = dat3['월 평균 근로소득'].apply(change2)
+
+order1 = ['하', '중', '상','최상']
+dat3['월 평균 근로소득'] = pd.Categorical(dat3['월 평균 근로소득'], categories=order1, ordered=True)
+table = pd.crosstab(dat3['월 평균 근로소득'], dat3['행복여부'])
+visual_table2 = table
+table_dict = table.stack().to_dict()
+
+plt.figure(figsize=(8, 6))
+mosaic(table_dict, labelizer=labelizer, title='월 평균 근로소득과 행복지수 여부')
+plt.show()
+
+```
+
+
+:::
+
+::: {.column width="40%"}
+
+- 카이제곱 통계량: 35.665
+- p-value: 0.000
+- 독립성 검정: 상관이 있다고 말할 통계적 근거가 충분하다.
+- 동질성 검정: 하나라도 비율이 다른 범주가 있다고 말할 통계적 근거가 충분하다.
+
+
+:::
+
+:::::
+
+
+## 3-2 Tukey 사후검정  
+### 행복지수와 월평균 근로소득
+
+```{python}
+#| code-fold: true
+#| code-summary: "클릭해서 코드 보기"
+dat3 = dat1[['월 평균 근로소득','행복지수']]
+dat3 = dat3.dropna()
+    
+dat3['월 평균 근로소득'] = dat3['월 평균 근로소득'].apply(change2)
+
+tukey = pairwise_tukeyhsd(
+    endog=dat3['행복지수'],
+    groups=dat3['월 평균 근로소득'],
+    alpha=0.05
+)
+
+# Tukey 요약 결과를 markdown으로 크게 출력
+display(Markdown(f"<pre style='font-size: 0.8em'>{tukey.summary()}</pre>"))
+
+```
+
+- tukey사후검정: 일부 변수 조합만 비율 차이가 있다.
+- 근로 소득과 행복지수가 비율 차이를 가진다고 볼 수 없다.
+
+---
+## 3-3 전체 데이터 검정
+
+::::: columns
+
+::: {.column width="50%"}
+![](./pyo.png)
+:::
+
+
+
+
+::: {.column width="40%"}
+
+### 예상과 다른 변수
+- 소득별
+- 스트레스 수준 분석
+- 기부여부
+- 정치성향별
+- 준법여부
+- 일과 여가 균형 수준
+- 체육활동 참여빈도
+- 주거형태별
+- 지역사회 소속감
+- 문화환경 만족도
+
+
+:::
+
+:::::
+
+
+## 3-4 모비율 신뢰구간 추정
+### 행복지수와 가족과의 식사
+::::: columns
+
+::: {.column width="60%"}
+```{python}
+#| code-fold: true
+#| #| code-summary: "클릭해서 코드 보기"
+dat23 = dat1[['가족과 함께 보내는 시간_가족과의 식사','행복지수']]
+dat23['가족과 함께 보내는 시간_가족과의 식사'] = dat23['가족과 함께 보내는 시간_가족과의 식사'].apply(group_5to3)
+dat23 = dat23.dropna()
+    
+tukey = pairwise_tukeyhsd(
+    endog=dat23['행복지수'],      
+    groups=dat23['가족과 함께 보내는 시간_가족과의 식사'],  
+    alpha=0.05            
+)
+# 모비율 추정 시각화
+visual_table1=visual_table1.reset_index()
+# 데이터 정의
+data = pd.DataFrame({
+    'Group': visual_table1['G_가족과 함께 보내는 시간_가족과의 식사'],
+    '행복': visual_table1['행복'],
+    '전체': visual_table1['불행']+visual_table1['행복']
+})
+
+visual_code(data)
+
+```
+
+
+
+:::
+
+::: {.column width="40%"}
+
+- 모비율 신뢰구간 추정
+- 신뢰구간을 통해 그룹간 모비율 차이가 있음을 최종적으로 확인
+
+
+:::
+
+:::::
+
+
+
+## 3-4 모비율 신뢰구간 추정
+### 행복지수와 월평균 근로소득
+
+::::: columns
+
+::: {.column width="60%"}
+```{python}
+#| code-fold: true
+#| #| code-summary: "클릭해서 코드 보기"
+dat3 = dat1[['월 평균 근로소득','행복지수']]
+dat3 = dat3.dropna()
+    
+dat3['월 평균 근로소득'] = dat3['월 평균 근로소득'].apply(change2)
+
+tukey = pairwise_tukeyhsd(
+    endog=dat3['행복지수'],
+    groups=dat3['월 평균 근로소득'],
+    alpha=0.05
+)
+
+
+# 모비율 시각화
+visual_table2=visual_table2.reset_index()
+
+data = pd.DataFrame({
+    'Group': visual_table2['월 평균 근로소득'],
+    '행복': visual_table2['행복'],
+    '전체': visual_table2['불행']+visual_table2['행복']
+})
+
+visual_code(data)
+
+```
+
+
+:::
+
+::: {.column width="40%"}
+
+- 모비율 신뢰구간 추정
+- 신뢰구간을 통해 그룹간 모비율 차이가 있다고 확신할 수 없음
+
+
+:::
+
+:::::
+
+:::::
+
+## 어려웠던 점
+<div style="text-align: center; font-size: 3em; font-weight: bold; margin: 2em 0;">
+  범주형 데이터 특성에 따른 상관계수 파악 불가능
+  
+  </br>
+
+  행복에 영향을 미치는 지표 선정의 어려움
+  
+</div>
+
+## 결론
+
+<h1 style="text-align: center; font-size: 3em; font-weight: bold; margin: 2em 0;">
+  진짜 행복은 뭘까용?
+</h1>
+
+
+
+
+
+
+# Thank you!

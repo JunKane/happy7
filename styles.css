@@ -1,0 +1,110 @@
+/* 🔹 전체 슬라이드 기본 스타일 */
+.reveal {
+    font-family: "Arial", sans-serif;  /* 글꼴 변경 */
+    font-size: 28px;  /* 기본 글자 크기 */
+    color: #000000;  /* 기본 글자 색상 */
+  }
+  
+  /* 🔹 제목 스타일 (title) */
+  .reveal h1 {
+    font-size: 64px;  /* 제목 크기 */
+    text-align: center;  /* 제목 가운데 정렬 */
+    font-weight: bold;  /* 글자 굵게 */
+  }
+
+  .reveal .title-slide .slide-background {
+    background-image: none !important;
+  }
+  
+  /* 🔹 부제목 스타일 (subtitle) */
+  .reveal h2 {
+    font-size: 48px;  /* 부제목 크기 */
+    color: #e1308b; /* 부제목 색상 */
+    text-align: center;
+  }
+  
+  /* 🔹 본문 텍스트 스타일 */
+  .reveal p {
+    font-size: 24px;  /* 본문 글자 크기 */
+    color: #000000;  /* 본문 글자 색 */
+  }
+  
+  /* 🔹 푸터 스타일 */
+  .reveal .footer p{
+    font-size: 16px;
+    color: #4e4e4e;
+    display: inline;
+    background-color: rgba(0, 0, 0, 0.5); 
+    text-align: right;  /* 푸터 오른쪽 정렬 */
+    padding: 10px;
+  }
+  
+  /* 전체 슬라이드 배경 */
+  .reveal .slide-background {
+    background-image: url("./3.jpg");
+    background-size: cover !important;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  /* 🔹 슬라이드 번호 스타일 */
+  .reveal .slide-number {
+    font-size: 18px;
+    color: #606060;
+  }
+  
+  /* 🔹 첫 번째(제목) 슬라이드 전용 스타일 */
+  .reveal .title-slide {
+    text-align: center;  /* 제목 중앙 정렬 */
+    background-size: cover !important;  /* 배경 꽉 차게 */
+  }
+  
+  /* 🔹 강조된 텍스트 */
+  .important {
+    color: #ff3333;
+    font-weight: bold;
+  }
+  
+
+  .reveal pre code {
+    color: #000000 !important;  /* 노란색 (골드) */
+    font-weight: bold;  /* 볼드 스타일 */
+}
+.thank-you {
+  position: fixed;  /* 페이지 크기와 상관없이 전체 화면 채우기 */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('./2.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 3rem;
+  font-weight: bold;
+  text-align: center;
+  z-index: 999; /* 다른 요소보다 위에 표시 */
+}
+
+.section-title {
+  font-size: 2.0em;  /* 🔥 제목 크기 */
+  font-weight: bold;
+  color: rgb(0, 0, 0);
+  display: block;
+  margin-top: 20px;
+}
+
+.callout-icon {
+    display: none;
+  }
+  .callout {
+    border-left: 5px solid #f9ba27;
+    padding-left: 1rem;  /* 아이콘 자리가 사라지니 여백 줄이기 */
+  }
+
+
+  
